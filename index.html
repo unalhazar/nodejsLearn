@@ -4,22 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Management</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Add User</h1>
-    <form id="userForm">
-        <input type="text" name="name" placeholder="Name" required>
-        <input type="number" name="age" placeholder="Age" required>
-        <button type="submit">Submit</button>
-    </form>
+    <div class="container mt-5">
+        <h1 class="mb-4 text-center">User Management</h1>
+        
+        <!-- Add User Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Add New User</h5>
+                <form id="userForm">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" name="name" placeholder="Enter name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="age" class="form-label">Age</label>
+                        <input type="number" class="form-control" name="age" placeholder="Enter age" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- User List -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">User List</h5>
+                <ul id="userList" class="list-group">
+                    <!-- Kullanıcılar burada listelenecek -->
+                </ul>
+            </div>
+        </div>
+    </div>
 
-    <h1>User List</h1>
-    <ul id="userList">
-        <!-- Kullanıcılar burada listelenecek -->
-    </ul>
+    <!-- Bootstrap JS ve Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        
+        // Formun submit işlemini ele al
         document.getElementById('userForm').onsubmit = function(event) {
             event.preventDefault(); // Sayfanın yenilenmesini engelle
 
@@ -43,59 +68,70 @@
             });
         };
 
-        // Kullanıcıları sunucudan al ve list
+        // Kullanıcıları sunucudan al ve listele
         fetch('http://localhost:3000/users')
             .then(response => response.json())
             .then(users => {
                 users.forEach(addUserToList);
             });
 
-        // Kullanıcıyı liste
+        // Kullanıcıyı listeye ekleyen fonksiyon
         function addUserToList(user) {
-            const userList = document.getElementById('userList');
-            const li = document.createElement('li');
-            li.textContent = `Name: ${user.name}, Age: ${user.age} `;
+    const userList = document.getElementById('userList');
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    li.textContent = `Name: ${user.name}, Age: ${user.age}`;
 
-            const deleteButton = document.createElement('button');
-            deleteButton.textContent = 'Delete';
-            deleteButton.onclick = () => {
-                fetch(`http://localhost:3000/users/${user.id}`, {
-                    method: 'DELETE'
+    const buttonGroup = document.createElement('div');
+
+    const updateButton = document.createElement('button');
+    updateButton.className = 'btn btn-warning btn-sm me-2';
+    updateButton.textContent = 'Update';
+    updateButton.onclick = () => {
+        const newName = prompt('Enter new name:', user.name);
+        const newAge = prompt('Enter new age:', user.age);
+        
+        if (newName && newAge) {
+            fetch(`http://localhost:3000/users/${user._id}`, {  // user.id yerine user._id
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: newName,
+                    age: newAge
                 })
-                .then(() => {
-                    li.remove(); 
-                });
-            };
-
-            const updateButton = document.createElement('button');
-            updateButton.textContent = 'Update';
-            updateButton.onclick = () => {
-                const newName = prompt('Enter new name:', user.name);
-                const newAge = prompt('Enter new age:', user.age);
-                
-                if (newName && newAge) {
-                    fetch(`http://localhost:3000/users/${user.id}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            name: newName,
-                            age: newAge
-                        })
-                    })
-                    .then(() => {
-                        li.textContent = `Name: ${newName}, Age: ${newAge} `;
-                        li.appendChild(updateButton);
-                        li.appendChild(deleteButton);
-                    });
-                }
-            };
-
-            li.appendChild(updateButton);
-            li.appendChild(deleteButton);
-            userList.appendChild(li);
+            })
+            .then(response => response.json())
+            .then(updatedUser => {
+                li.textContent = `Name: ${updatedUser.name}, Age: ${updatedUser.age} `;
+                li.appendChild(buttonGroup);
+            })
+            .catch(err => console.error('Update failed:', err));
         }
+    };
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'btn btn-danger btn-sm';
+    deleteButton.textContent = 'Delete';
+    deleteButton.onclick = () => {
+        fetch(`http://localhost:3000/users/${user._id}`, {  // user.id yerine user._id
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(text) });
+            }
+            li.remove();
+        })
+        .catch(err => console.error('Delete failed:', err));
+    };
+
+    buttonGroup.appendChild(updateButton);
+    buttonGroup.appendChild(deleteButton);
+    li.appendChild(buttonGroup);
+    userList.appendChild(li);
+}
     </script>
 </body>
 </html>

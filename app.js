@@ -1,49 +1,74 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors'); 
+const cors = require('cors');
+const mongoose = require('mongoose');
+
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-let users = []; 
+// Mongoose strictQuery ayarını yapılandırın
+mongoose.set('strictQuery', false);
 
-// CREATE
+// MongoDB bağlantısı
+mongoose.connect('mongodb://localhost:27017/userdb', { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.log('MongoDB connection error:', err));
+
+// Kullanıcı şemasını tanımlayın
+const userSchema = new mongoose.Schema({
+  name: String,
+  age: Number
+});
+
+// Kullanıcı modelini oluşturun
+const User = mongoose.model('User', userSchema);
+
+// CREATE: Yeni kullanıcı ekleme
 app.post('/users', (req, res) => {
-  const user = {
-    id: users.length + 1,
-    name: req.body.name,
-    age: req.body.age,
-  };
-  users.push(user);
-  res.send(user);
-});
+    const newUser = new User({
+      name: req.body.name,
+      age: req.body.age
+    });
+  
+    newUser.save()
+      .then(user => res.send(user))
+      .catch(err => res.status(400).send(err));
+  });
 
-// READ: Tüm kullanıcıları 
+// READ: Tüm kullanıcıları listeleme
 app.get('/users', (req, res) => {
-  res.send(users);
+  User.find()
+    .then(users => res.send(users))
+    .catch(err => res.status(400).send(err));
 });
 
-// UPDATE
+// UPDATE: Bir kullanıcıyı güncelleme
 app.put('/users/:id', (req, res) => {
-  const userId = parseInt(req.params.id);
-  const user = users.find(u => u.id === userId);
-  if (user) {
-    user.name = req.body.name || user.name;
-    user.age = req.body.age || user.age;
-    res.send(user);
-  } else {
-    res.status(404).send('User not found');
-  }
-});
+    User.findByIdAndUpdate(req.params.id, req.body, { new: true })
+      .then(user => {
+        if (!user) {
+          return res.status(404).send('User not found');
+        }
+        res.send(user);
+      })
+      .catch(err => res.status(400).send('Update failed'));
+  });
 
-// DELETE
+// DELETE: Bir kullanıcıyı silme
 app.delete('/users/:id', (req, res) => {
-  const userId = parseInt(req.params.id);
-  users = users.filter(u => u.id !== userId);
-  res.send(`User with ID ${userId} has been deleted`);
-});
+    User.findByIdAndDelete(req.params.id)
+      .then(user => {
+        if (!user) {
+          return res.status(404).send('User not found');
+        }
+        res.send(`User with ID ${req.params.id} has been deleted`);
+      })
+      .catch(err => res.status(400).send('Delete failed'));
+  });
+  
 
 const PORT = 3000;
 app.listen(PORT, () => {
