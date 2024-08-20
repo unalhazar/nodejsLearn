@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+</head>
+<body>
+    <h1>Add User</h1>
+    <form id="userForm">
+        <input type="text" name="name" placeholder="Name" required>
+        <input type="number" name="age" placeholder="Age" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    <h1>User List</h1>
+    <ul id="userList">
+        <!-- Kullanıcılar burada listelenecek -->
+    </ul>
+
+    <script>
+        // Formun submit işlemini ele al
+        document.getElementById('userForm').onsubmit = function(event) {
+            event.preventDefault(); // Sayfanın yenilenmesini engelle
+
+            const formData = new FormData(this);
+            const data = {
+                name: formData.get('name'),
+                age: formData.get('age')
+            };
+
+            fetch('http://localhost:3000/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(user => {
+                addUserToList(user); // Yeni kullanıcıyı listeye ekle
+                this.reset(); // Formu sıfırla
+            });
+        };
+
+        // Kullanıcıları sunucudan al ve listele
+        fetch('http://localhost:3000/users')
+            .then(response => response.json())
+            .then(users => {
+                users.forEach(addUserToList);
+            });
+
+        // Kullanıcıyı listeye ekleyen fonksiyon
+        function addUserToList(user) {
+            const userList = document.getElementById('userList');
+            const li = document.createElement('li');
+            li.textContent = `Name: ${user.name}, Age: ${user.age} `;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.onclick = () => {
+                fetch(`http://localhost:3000/users/${user.id}`, {
+                    method: 'DELETE'
+                })
+                .then(() => {
+                    li.remove(); // Liste öğesini DOM'dan kaldır
+                });
+            };
+
+            const updateButton = document.createElement('button');
+            updateButton.textContent = 'Update';
+            updateButton.onclick = () => {
+                const newName = prompt('Enter new name:', user.name);
+                const newAge = prompt('Enter new age:', user.age);
+                
+                if (newName && newAge) {
+                    fetch(`http://localhost:3000/users/${user.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: newName,
+                            age: newAge
+                        })
+                    })
+                    .then(() => {
+                        li.textContent = `Name: ${newName}, Age: ${newAge} `;
+                        li.appendChild(updateButton);
+                        li.appendChild(deleteButton);
+                    });
+                }
+            };
+
+            li.appendChild(updateButton);
+            li.appendChild(deleteButton);
+            userList.appendChild(li);
+        }
+    </script>
+</body>
+</html>
