@@ -19,7 +19,7 @@
     </ul>
 
     <script>
-        // Formun submit işlemini ele al
+        
         document.getElementById('userForm').onsubmit = function(event) {
             event.preventDefault(); // Sayfanın yenilenmesini engelle
 
@@ -43,14 +43,14 @@
             });
         };
 
-        // Kullanıcıları sunucudan al ve listele
+        // Kullanıcıları sunucudan al ve list
         fetch('http://localhost:3000/users')
             .then(response => response.json())
             .then(users => {
                 users.forEach(addUserToList);
             });
 
-        // Kullanıcıyı listeye ekleyen fonksiyon
+        // Kullanıcıyı liste
         function addUserToList(user) {
             const userList = document.getElementById('userList');
             const li = document.createElement('li');
@@ -63,7 +63,7 @@
                     method: 'DELETE'
                 })
                 .then(() => {
-                    li.remove(); // Liste öğesini DOM'dan kaldır
+                    li.remove(); 
                 });
             };
 

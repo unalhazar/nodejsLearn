@@ -1,15 +1,15 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors'); // CORS modülünü dahil edin
+const cors = require('cors'); 
 const app = express();
 
-app.use(cors()); // CORS'u etkinleştirin
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-let users = []; // Basit bir kullanıcı listesi
+let users = []; 
 
-// CREATE: Yeni kullanıcı ekleme
+// CREATE
 app.post('/users', (req, res) => {
   const user = {
     id: users.length + 1,
@@ -20,12 +20,12 @@ app.post('/users', (req, res) => {
   res.send(user);
 });
 
-// READ: Tüm kullanıcıları listeleme
+// READ: Tüm kullanıcıları 
 app.get('/users', (req, res) => {
   res.send(users);
 });
 
-// UPDATE: Bir kullanıcıyı güncelleme
+// UPDATE
 app.put('/users/:id', (req, res) => {
   const userId = parseInt(req.params.id);
   const user = users.find(u => u.id === userId);
@@ -38,7 +38,7 @@ app.put('/users/:id', (req, res) => {
   }
 });
 
-// DELETE: Bir kullanıcıyı silme
+// DELETE
 app.delete('/users/:id', (req, res) => {
   const userId = parseInt(req.params.id);
   users = users.filter(u => u.id !== userId);
